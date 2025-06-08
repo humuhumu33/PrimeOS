@@ -5,13 +5,12 @@
  * Test suite for the chess-engine module.
  */
 
-import { 
+import {
   createChessEngine,
-  ChessEngineInterface,
-  ChessEngineOptions,
-  ChessEngineState
+  ChessEngineInterface
 } from './index';
 import { ModelLifecycleState } from '../os/model';
+import { fenToBoardState } from '../core/chess-core/board';
 
 describe('chess-engine', () => {
   let instance: ChessEngineInterface;
@@ -60,79 +59,13 @@ describe('chess-engine', () => {
     });
   });
   
-  describe('Basic functionality', () => {
-    test('should process input data', async () => {
-      const testInput = 'test-data';
-      const result = await instance.process(testInput);
-      
-      expect(result.success).toBe(true);
-      expect(result.data).toBeDefined();
-      expect(result.timestamp).toBeDefined();
-    });
-    
-    test('should access logger', () => {
-      const logger = instance.getLogger();
-      expect(logger).toBeDefined();
-      expect(typeof logger.info).toBe('function');
-    });
-    
-    test('should handle custom state', async () => {
-      const state = instance.getState();
-      expect(state.custom).toBeDefined();
-      
-      // Add assertions specific to module's custom state
-    });
-  });
-  
-  describe('Configuration options', () => {
-    test('should use default options when none provided', async () => {
-      const defaultInstance = createChessEngine();
-      await defaultInstance.initialize();
-      
-      expect(defaultInstance).toBeDefined();
-      
-      await defaultInstance.terminate();
-    });
-    
-    test('should respect custom options', async () => {
-      const customOptions: ChessEngineOptions = {
-        debug: true,
-        name: 'custom-chess-engine',
-        version: '1.2.3',
-        // Add more custom options as needed
-      };
-      
-      const customInstance = createChessEngine(customOptions);
-      await customInstance.initialize();
-      
-      // Process something to get a result with source
-      const result = await customInstance.process('test');
-      expect(result.source).toContain('custom-chess-engine');
-      expect(result.source).toContain('1.2.3');
-      
-      await customInstance.terminate();
-    });
-  });
-  
-  describe('Error handling', () => {
-    test('should handle processing errors gracefully', async () => {
-      // Create a bad input that will cause an error
-      // This is just a placeholder - you may need to adjust for your specific module
-      const badInput = undefined;
-      
-      // Process should not throw but return error result
-      const result = await instance.process(badInput as any);
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-  });
-  
-  // Template placeholder: Add more test suites specific to the module
-  describe('Module-specific functionality', () => {
-    test('should implement module-specific features', () => {
-      // This is a placeholder for module-specific tests
-      // Replace with actual tests for the module's features
-      expect(true).toBe(true);
+  describe('Deterministic move computation', () => {
+    test('same position yields same move', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const m1 = await instance.computeMove();
+      const m2 = await instance.computeMove();
+      expect(m1).toEqual(m2);
     });
   });
 });

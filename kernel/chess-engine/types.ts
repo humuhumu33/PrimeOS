@@ -9,10 +9,10 @@ import {
   ModelOptions,
   ModelInterface,
   ModelResult,
-  ModelState,
-  ModelLifecycleState
+  ModelState
 } from '../os/model/types';
 import { LoggingInterface } from '../os/logging';
+import { BoardState, ChessMove } from '../core/chess-core/types';
 
 /**
  * Configuration options for chess-engine
@@ -28,10 +28,17 @@ export interface ChessEngineOptions extends ModelOptions {
  * Core interface for chess-engine functionality
  */
 export interface ChessEngineInterface extends ModelInterface {
-  /**
-   * Module-specific methods go here
-   */
-  // Add module-specific methods here
+  /** Load a board position */
+  loadPosition(board: BoardState): Promise<void>;
+
+  /** Compute best move from current position */
+  computeMove(): Promise<ChessMove | null>;
+
+  /** Apply a move to the current board */
+  applyMove(move: ChessMove): Promise<void>;
+
+  /** Train evaluation tables from dataset */
+  train(dataset: ChessGame[]): Promise<void>;
   
   /**
    * Access the module logger
@@ -52,4 +59,11 @@ export interface ChessEngineState extends ModelState {
    * Module-specific state properties go here
    */
   // Add module-specific state properties here
+}
+
+/** Dataset entry for training */
+export interface ChessGame {
+  initial: BoardState;
+  moves: ChessMove[];
+  result: '1-0' | '0-1' | '1/2-1/2';
 }
