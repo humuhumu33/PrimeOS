@@ -69,6 +69,14 @@ describe('chess-engine', () => {
       const m2 = await instance.computeMove();
       expect(m1).toEqual(m2);
     });
+
+    test('move list generation via VM', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const moves = (instance as any).generateMoves(start);
+      expect(Array.isArray(moves)).toBe(true);
+      expect(moves.length).toBeGreaterThan(0);
+    });
   });
 
   describe('Training', () => {

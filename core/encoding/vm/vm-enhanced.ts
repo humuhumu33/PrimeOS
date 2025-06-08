@@ -393,14 +393,29 @@ export class EnhancedChunkVM {
       case ExtendedOpcodes.OP_LOAD:
         if (operand !== undefined) {
           this.stack.push(this.memory[operand] || 0);
+        } else {
+          if (this.stack.length < 1) {
+            throw new VMExecutionError('LOAD', 'LOAD requires address on stack');
+          }
+          const addr = this.stack.pop()!;
+          this.stack.push(this.memory[addr] || 0);
         }
         break;
-        
+
       case ExtendedOpcodes.OP_STORE:
-        if (this.stack.length < 1 || operand === undefined) {
-          throw new VMExecutionError('STORE', 'STORE requires stack value and memory address');
+        if (operand !== undefined) {
+          if (this.stack.length < 1) {
+            throw new VMExecutionError('STORE', 'STORE requires stack value');
+          }
+          this.memory[operand] = this.stack.pop()!;
+        } else {
+          if (this.stack.length < 2) {
+            throw new VMExecutionError('STORE', 'STORE requires value and address on stack');
+          }
+          const addr = this.stack.pop()!;
+          const val = this.stack.pop()!;
+          this.memory[addr] = val;
         }
-        this.memory[operand] = this.stack.pop()!;
         break;
         
       // I/O operations
