@@ -1,5 +1,11 @@
 import { BoardState, ChessPiece, Square } from './types';
-import { getPrimeRegistry, getMappings, initializePrimeMappings } from './primes';
+import {
+  getPrimeRegistry,
+  getMappings,
+  initializePrimeMappings,
+  getHalfmovePrime,
+  getFullmovePrime,
+} from './primes';
 
 /** Ensure that prime mappings are initialized */
 async function ensureInitialized(): Promise<void> {
@@ -30,6 +36,8 @@ export async function encodeBoard(state: BoardState): Promise<bigint> {
   if (state.enPassant) {
     value *= enPassant[state.enPassant];
   }
+  value *= getHalfmovePrime(state.halfmove);
+  value *= getFullmovePrime(state.fullmove);
   return value;
 }
 
@@ -46,6 +54,8 @@ export async function decodeBoard(encoded: bigint): Promise<BoardState> {
   let activeColor: 'w' | 'b' = 'w';
   const castlingSet = new Set<'K' | 'Q' | 'k' | 'q'>();
   let enPassant: Square | null = null;
+  let halfmove = 0;
+  let fullmove = 1;
 
   for (const { prime } of factors) {
     const mapping = primeLookup[prime.toString()];
@@ -58,6 +68,10 @@ export async function decodeBoard(encoded: bigint): Promise<BoardState> {
       castlingSet.add(mapping.castling);
     } else if (mapping.enPassant) {
       enPassant = mapping.enPassant;
+    } else if (typeof mapping.halfmove === 'number') {
+      halfmove = mapping.halfmove;
+    } else if (typeof mapping.fullmove === 'number') {
+      fullmove = mapping.fullmove;
     }
   }
 
@@ -69,8 +83,8 @@ export async function decodeBoard(encoded: bigint): Promise<BoardState> {
     activeColor,
     castling,
     enPassant,
-    halfmove: 0,
-    fullmove: 1
+    halfmove,
+    fullmove
   };
 }
 

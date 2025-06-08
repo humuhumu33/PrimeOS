@@ -7,6 +7,8 @@ export interface PrimeLookupEntry {
   activeColor?: 'w' | 'b';
   castling?: 'K' | 'Q' | 'k' | 'q';
   enPassant?: Square;
+  halfmove?: number;
+  fullmove?: number;
 }
 
 export interface PrimeMappings {
@@ -14,12 +16,15 @@ export interface PrimeMappings {
   activeColor: Record<'w' | 'b', bigint>;
   castling: Record<'K' | 'Q' | 'k' | 'q', bigint>;
   enPassant: Record<Square, bigint>;
+  halfmove: Record<number, bigint>;
+  fullmove: Record<number, bigint>;
   primeLookup: Record<string, PrimeLookupEntry>;
 }
 
 let registry: PrimeRegistryInterface | null = null;
 let mappings: PrimeMappings | null = null;
 let initialized = false;
+let nextIndex = 0;
 
 export async function initializePrimeMappings(): Promise<void> {
   if (initialized) return;
@@ -28,6 +33,8 @@ export async function initializePrimeMappings(): Promise<void> {
   const activeColor: Record<'w' | 'b', bigint> = {} as any;
   const castling: Record<'K' | 'Q' | 'k' | 'q', bigint> = {} as any;
   const enPassant: Record<Square, bigint> = {} as any;
+  const halfmove: Record<number, bigint> = {};
+  const fullmove: Record<number, bigint> = {};
   const primeLookup: Record<string, PrimeLookupEntry> = {};
 
   const files = ['a','b','c','d','e','f','g','h'] as const;
@@ -70,7 +77,8 @@ export async function initializePrimeMappings(): Promise<void> {
     }
   }
 
-  mappings = { pieceSquare, activeColor, castling, enPassant, primeLookup };
+  nextIndex = index;
+  mappings = { pieceSquare, activeColor, castling, enPassant, halfmove, fullmove, primeLookup };
   initialized = true;
 }
 
@@ -82,4 +90,24 @@ export function getPrimeRegistry(): PrimeRegistryInterface {
 export function getMappings(): PrimeMappings {
   if (!mappings) throw new Error('Prime mappings not initialized');
   return mappings;
+}
+
+export function getHalfmovePrime(value: number): bigint {
+  if (!mappings) throw new Error('Prime mappings not initialized');
+  if (!(value in mappings.halfmove)) {
+    const prime = registry!.getPrime(nextIndex++);
+    mappings.halfmove[value] = prime;
+    mappings.primeLookup[prime.toString()] = { halfmove: value };
+  }
+  return mappings.halfmove[value];
+}
+
+export function getFullmovePrime(value: number): bigint {
+  if (!mappings) throw new Error('Prime mappings not initialized');
+  if (!(value in mappings.fullmove)) {
+    const prime = registry!.getPrime(nextIndex++);
+    mappings.fullmove[value] = prime;
+    mappings.primeLookup[prime.toString()] = { fullmove: value };
+  }
+  return mappings.fullmove[value];
 }
