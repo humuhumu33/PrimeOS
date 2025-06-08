@@ -6,4 +6,5 @@
  * should export their functionality from subdirectories within this folder.
  */
 
-export {};
+export * from './hanoi';
+
