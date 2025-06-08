@@ -25,7 +25,8 @@
       "@primeos/core/precision/*": ["./core/precision/*"],
       "@primeos/os-model": ["./os/model/index.ts"],
       "@primeos/os-logging": ["./os/logging/index.ts"],
-      "@primeos/os-tests": ["./os/os-tests/index.ts"]
+      "@primeos/os-tests": ["./os/os-tests/index.ts"],
+      "@primeos/os-apps": ["./os/apps/index.ts"]
     }
   },
   "include": [

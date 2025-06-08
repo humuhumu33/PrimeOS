@@ -36,7 +36,8 @@
       "@primeos/core/*": ["./*"],
       "@primeos/os-model": ["../os/model"],
       "@primeos/os-logging": ["../os/logging"],
-      "@primeos/os-tests": ["../os/os-tests"]
+      "@primeos/os-tests": ["../os/os-tests"],
+      "@primeos/os-apps": ["../os/apps"]
     }
   },
   "include": [

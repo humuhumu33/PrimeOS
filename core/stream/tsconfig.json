@@ -24,7 +24,8 @@
       "@primeos/core-encoding": ["core/encoding/index.ts"],
       "@primeos/core-integrity": ["core/integrity/index.ts"],
       "@primeos/os-model": ["os/model/index.ts"],
-      "@primeos/os-logging": ["os/logging/index.ts"]
+      "@primeos/os-logging": ["os/logging/index.ts"],
+      "@primeos/os-apps": ["os/apps/index.ts"]
     }
   },
   "include": [
