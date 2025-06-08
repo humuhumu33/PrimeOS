@@ -1,17 +1,6 @@
 # chess
 
-Chess implementation for PrimeOS
-
-## Overview
-
-This module follows the standard PrimeOS module pattern, implementing the PrimeOS Model interface for consistent lifecycle management, state tracking, error handling, and integrated logging.
-
-## Features
-
-- Fully integrates with the PrimeOS model system
-- Built-in logging capabilities
-- Standard lifecycle management (initialize, process, reset, terminate)
-- Automatic error handling and result formatting
+Command line application that wires the chess engine into PrimeOS. It can run in interactive mode (human vs machine) or in automatic mode (machine vs machine) for a fixed depth.
 
 ## Installation
 
@@ -22,114 +11,31 @@ npm install chess
 ## Usage
 
 ```typescript
-import { createChess } from 'chess';
+import { createAndInitializeChess } from 'chess';
 
-// Create an instance
-const instance = createChess({
-  debug: true,
-  name: 'chess-instance',
-  version: '1.0.0'
-});
+const game = await createAndInitializeChess({ mode: 'human', depth: 3 });
+await game.play();
+```
 
-// Initialize the module
-await instance.initialize();
+### Command line examples
 
-// Process data
-const result = await instance.process('example-input');
-console.log(result);
+After building the project or running with `ts-node`, you can launch the game directly:
 
-// Clean up when done
-await instance.terminate();
+```bash
+# Human plays against the engine for three half moves
+npx ts-node os/apps/chess/index.ts --mode=human --depth=3
+
+# Engine plays against itself for ten half moves
+npx ts-node os/apps/chess/index.ts --mode=auto --depth=10
 ```
 
 ## API
 
-### `createChess(options)`
+- **`createChess(options?)`** – create a new game instance.
+- **`createAndInitializeChess(options?)`** – helper that initializes the instance.
+- **`play(): Promise<void>`** – start the CLI loop.
 
-Creates a new chess instance with the specified options.
+### Deterministic Behaviour
 
-Parameters:
-- `options` - Optional configuration options
+`chess` delegates all move generation to `chess-engine`. Because board states are encoded using deterministic prime mappings and the engine evaluates moves with the `EnhancedChunkVM`, the same command sequence will always yield the same result.
 
-Returns:
-- A chess instance implementing ChessInterface
-
-### ChessInterface
-
-The main interface implemented by chess. Extends the ModelInterface.
-
-Methods:
-- `initialize()` - Initialize the module (required before processing)
-- `process<T, R>(input: T)` - Process the input data and return a result
-- `reset()` - Reset the module to its initial state
-- `terminate()` - Release resources and shut down the module
-- `getState()` - Get the current module state
-- `getLogger()` - Get the module's logger instance
-
-### Options
-
-Configuration options for chess:
-
-```typescript
-interface ChessOptions {
-  // Enable debug mode
-  debug?: boolean;
-  
-  // Module name
-  name?: string;
-  
-  // Module version
-  version?: string;
-  
-  // Module-specific options
-  // ...
-}
-```
-
-### Result Format
-
-All operations return a standardized result format:
-
-```typescript
-{
-  success: true,          // Success indicator
-  data: { ... },          // Operation result data
-  timestamp: 1620000000,  // Operation timestamp
-  source: 'module-name'   // Source module
-}
-```
-
-## Lifecycle Management
-
-The module follows a defined lifecycle:
-
-1. **Uninitialized**: Initial state when created
-2. **Initializing**: During setup and resource allocation
-3. **Ready**: Available for processing
-4. **Processing**: Actively handling an operation
-5. **Error**: Encountered an issue
-6. **Terminating**: During resource cleanup
-7. **Terminated**: Final state after cleanup
-
-Always follow this sequence:
-1. Create the module with `createChess`
-2. Initialize with `initialize()`
-3. Process data with `process()`
-4. Clean up with `terminate()`
-
-## Custom Implementation
-
-You can extend the functionality by adding module-specific methods to the implementation.
-
-## Error Handling
-
-Errors are automatically caught and returned in a standardized format:
-
-```typescript
-{
-  success: false,
-  error: "Error message",
-  timestamp: 1620000000,
-  source: "module-name"
-}
-```
