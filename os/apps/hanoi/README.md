@@ -119,10 +119,17 @@ You can extend the functionality by adding module-specific methods to the implem
 
 ## CLI Usage
 
-A command line entry is available at `src/cli.ts`:
+The CLI is defined in `src/cli.ts` and runs through `ts-node`:
 
 ```bash
 npx ts-node src/cli.ts --disks=4 --auto
+```
+
+Install `ts-node` with `npm install ts-node` if it isn't available. After
+building the project you can run the compiled JavaScript instead:
+
+```bash
+node dist/cli.js --disks=4 --auto
 ```
 
 Use `--no-auto` to just display the initial state without solving.
