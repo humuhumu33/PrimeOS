@@ -15,11 +15,20 @@ async function ensureInitialized(): Promise<void> {
  */
 export async function encodeBoard(state: BoardState): Promise<bigint> {
   await ensureInitialized();
-  const { pieceSquare } = getMappings();
+  const { pieceSquare, activeColor, castling, enPassant } = getMappings();
   let value = 1n;
   for (const [square, piece] of Object.entries(state.pieces)) {
     if (!piece) continue;
     value *= pieceSquare[piece as ChessPiece][square as Square];
+  }
+  value *= activeColor[state.activeColor];
+  if (state.castling && state.castling !== '-') {
+    for (const flag of state.castling.split('') as ('K'|'Q'|'k'|'q')[]) {
+      value *= castling[flag];
+    }
+  }
+  if (state.enPassant) {
+    value *= enPassant[state.enPassant];
   }
   return value;
 }
@@ -34,18 +43,32 @@ export async function decodeBoard(encoded: bigint): Promise<BoardState> {
   const factors = registry.factor(encoded);
 
   const pieces: Partial<Record<Square, ChessPiece>> = {};
+  let activeColor: 'w' | 'b' = 'w';
+  const castlingSet = new Set<'K' | 'Q' | 'k' | 'q'>();
+  let enPassant: Square | null = null;
+
   for (const { prime } of factors) {
     const mapping = primeLookup[prime.toString()];
-    if (mapping) {
+    if (!mapping) continue;
+    if (mapping.piece && mapping.square) {
       pieces[mapping.square] = mapping.piece;
+    } else if (mapping.activeColor) {
+      activeColor = mapping.activeColor;
+    } else if (mapping.castling) {
+      castlingSet.add(mapping.castling);
+    } else if (mapping.enPassant) {
+      enPassant = mapping.enPassant;
     }
   }
 
+  const order = ['K', 'Q', 'k', 'q'] as const;
+  const castling = order.filter(c => castlingSet.has(c)).join('') || '-';
+
   return {
     pieces,
-    activeColor: 'w',
-    castling: '-',
-    enPassant: null,
+    activeColor,
+    castling,
+    enPassant,
     halfmove: 0,
     fullmove: 1
   };

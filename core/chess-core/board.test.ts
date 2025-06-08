@@ -16,11 +16,15 @@ describe('board encoding', () => {
   });
 
   test('round-trip encode/decode', async () => {
-    const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+    const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq e3 0 1';
     const state = fenToBoardState(fen);
     const encoded = await encodeBoard(state);
     const decoded = await decodeBoard(encoded);
-    const fen2 = boardStateToFen({ ...decoded, activeColor: state.activeColor, castling: state.castling, enPassant: state.enPassant, halfmove: state.halfmove, fullmove: state.fullmove });
+    const fen2 = boardStateToFen({
+      ...decoded,
+      halfmove: state.halfmove,
+      fullmove: state.fullmove,
+    });
     expect(fen2).toBe(fen);
   });
 });
