@@ -20,11 +20,7 @@ describe('board encoding', () => {
     const state = fenToBoardState(fen);
     const encoded = await encodeBoard(state);
     const decoded = await decodeBoard(encoded);
-    const fen2 = boardStateToFen({
-      ...decoded,
-      halfmove: state.halfmove,
-      fullmove: state.fullmove,
-    });
+    const fen2 = boardStateToFen(decoded);
     expect(fen2).toBe(fen);
   });
 });
