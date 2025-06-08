@@ -54,6 +54,12 @@ The `os` package provides high-level system capabilities:
 2. **Scheduler**: Operation scheduling and resource allocation
 3. **Application Interfaces**: Integration points for applications
 
+## Available Applications
+
+Application modules live under the `os/apps` directory. They serve as examples of how to build on the PrimeOS runtime and leverage the model system. A small but growing set of apps is included:
+
+- **Tower of Hanoi** – a puzzle solver demonstrating recursive processing and lifecycle management.
+
 ## Design Philosophy
 
 PrimeOS is designed with the following principles:
