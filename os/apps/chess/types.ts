@@ -18,20 +18,22 @@ import { LoggingInterface } from '../os/logging';
  * Configuration options for chess
  */
 export interface ChessOptions extends ModelOptions {
-  /**
-   * Module-specific options go here
-   */
-  // Add module-specific options here
+  /** Play mode: human vs machine or machine vs machine */
+  mode?: 'human' | 'auto';
+
+  /** Number of half-moves to play in auto mode */
+  depth?: number;
+
+  /** Optional path to training dataset */
+  train?: string;
 }
 
 /**
  * Core interface for chess functionality
  */
 export interface ChessInterface extends ModelInterface {
-  /**
-   * Module-specific methods go here
-   */
-  // Add module-specific methods here
+  /** Run the CLI play loop */
+  play(): Promise<void>;
   
   /**
    * Access the module logger
@@ -48,8 +50,6 @@ export type ChessResult<T = unknown> = ModelResult<T>;
  * Extended state for chess module
  */
 export interface ChessState extends ModelState {
-  /**
-   * Module-specific state properties go here
-   */
-  // Add module-specific state properties here
+  /** Current board position in FEN notation */
+  board?: string;
 }

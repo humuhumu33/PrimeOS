@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-import { createAndInitializeHanoi } from '../os/apps/hanoi';
+import { createAndInitializeChess } from '../os/apps/chess';
 
 function parseArgs() {
   const args = process.argv.slice(2);
-  const opts: { disks?: number; auto: boolean } = { auto: false };
+  const opts: { mode?: 'human' | 'auto'; depth?: number; train?: string } = {};
   for (const a of args) {
-    if (a.startsWith('--disks=')) {
-      opts.disks = parseInt(a.split('=')[1], 10);
-    } else if (a === '--auto') {
-      opts.auto = true;
-    } else if (a === '--no-auto') {
-      opts.auto = false;
+    if (a.startsWith('--mode=')) {
+      opts.mode = a.split('=')[1] as 'human' | 'auto';
+    } else if (a.startsWith('--depth=')) {
+      opts.depth = parseInt(a.split('=')[1], 10);
+    } else if (a.startsWith('--train=')) {
+      opts.train = a.split('=')[1];
     }
   }
   return opts;
@@ -18,15 +18,9 @@ function parseArgs() {
 
 async function main() {
   const opts = parseArgs();
-  const hanoi = await createAndInitializeHanoi({ disks: opts.disks });
-
-  if (opts.auto) {
-    await hanoi.solve();
-  }
-
-  console.log(JSON.stringify(hanoi.getState().towers));
-  console.log(`Moves: ${hanoi.getState().moves.length}`);
-  await hanoi.terminate();
+  const chess = await createAndInitializeChess(opts);
+  await chess.play();
+  await chess.terminate();
 }
 
 main().catch(err => {
