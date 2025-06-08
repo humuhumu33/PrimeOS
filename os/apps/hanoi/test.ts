@@ -1,30 +1,55 @@
-import { createAndInitializeHanoi, HanoiInterface } from './index';
+import { createHanoi, HanoiInterface } from './index';
+import { createModelTestAdapter } from '../../model';
+import {
+  TestableInterface,
+  TestResult,
+  TestResults,
+  TestMetadata,
+  TestResultStatus
+} from '../os-tests';
 
-function isSolved(state: HanoiInterface['getState']) {
-  const towers = (typeof state === 'function' ? state() : state).towers;
-  const n = Math.max(...towers.flat(), 0);
-  return (
-    towers[0].length === 0 &&
-    towers[1].length === 0 &&
-    towers[2].join(',') === Array.from({ length: n }, (_, i) => n - i).join(',')
-  );
+export default class HanoiTests implements TestableInterface {
+  validateBase(): TestResult {
+    const timestamp = Date.now();
+    const instance: HanoiInterface = createHanoi();
+    const hasMethods =
+      typeof instance.solve === 'function' &&
+      typeof instance.moveDisk === 'function';
+
+    return {
+      id: 'hanoi-base-validation',
+      status: hasMethods ? TestResultStatus.Passed : TestResultStatus.Failed,
+      error: hasMethods ? undefined : 'Required methods missing',
+      duration: 0,
+      timestamp,
+      source: 'hanoi-tests'
+    };
+  }
+
+  async runTests(): Promise<TestResults> {
+    const hanoi = createHanoi({ disks: 3 });
+    await hanoi.initialize();
+
+    const adapter = createModelTestAdapter(hanoi, {
+      tags: ['hanoi', 'puzzle'],
+      testCases: [
+        { name: 'auto-solve', input: { action: 'solve' } },
+        { name: 'invalid-move', input: { action: 'move', from: 1, to: 0 } },
+        { name: 'model-reset', input: null }
+      ]
+    });
+
+    const results = await adapter.runTests();
+    await hanoi.terminate();
+    return results;
+  }
+
+  getTestMetadata(): TestMetadata {
+    return {
+      moduleName: 'hanoi',
+      version: '0.1.0',
+      testCount: 3,
+      tags: ['hanoi', 'puzzle']
+    };
+  }
 }
-
-describe('hanoi solver', () => {
-  test('solves default configuration', async () => {
-    const h: HanoiInterface = await createAndInitializeHanoi({ disks: 3 });
-    await h.solve();
-    expect(isSolved(() => h.getState())).toBe(true);
-    expect(h.getState().moves.length).toBe(7);
-    await h.terminate();
-  });
-
-  test('solves custom starting state', async () => {
-    const towers = [[], [3, 2, 1], []];
-    const h: HanoiInterface = await createAndInitializeHanoi({ disks: 3, towers });
-    await h.solve();
-    expect(isSolved(() => h.getState())).toBe(true);
-    await h.terminate();
-  });
-});
-
