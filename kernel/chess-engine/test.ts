@@ -9,7 +9,7 @@ import {
   createChessEngine,
   ChessEngineInterface
 } from './index';
-import { ModelLifecycleState } from '../os/model';
+import { ModelLifecycleState } from '../../os/model';
 import { fenToBoardState } from '../core/chess-core/board';
 
 describe('chess-engine', () => {

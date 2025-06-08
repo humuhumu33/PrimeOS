@@ -11,7 +11,7 @@ import {
   ChessCoreOptions,
   ChessCoreState
 } from './index';
-import { ModelLifecycleState } from '../os/model';
+import { ModelLifecycleState } from '../../os/model';
 
 describe('chess-core', () => {
   let instance: ChessCoreInterface;

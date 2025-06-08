@@ -6,7 +6,7 @@
  * It follows the standard PrimeOS model pattern.
  */
 
-import { BaseModel } from '../os/model';
+import { BaseModel } from '../../os/model';
 import {
   ChessEngineOptions,
   ChessEngineInterface,

@@ -10,8 +10,8 @@ import {
   ModelInterface,
   ModelResult,
   ModelState
-} from '../os/model/types';
-import { LoggingInterface } from '../os/logging';
+} from '../../os/model/types';
+import { LoggingInterface } from '../../os/logging';
 import { BoardState, ChessMove } from '../core/chess-core/types';
 
 /**

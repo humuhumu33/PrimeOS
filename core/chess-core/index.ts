@@ -11,7 +11,7 @@ import {
   ModelResult,
   ModelLifecycleState,
   createAndInitializeModel
-} from '../os/model';
+} from '../../os/model';
 import {
   ChessCoreOptions,
   ChessCoreInterface,
