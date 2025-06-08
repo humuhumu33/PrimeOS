@@ -109,3 +109,5 @@ export async function createAndInitializeChessCore(options: ChessCoreOptions = {
 
 // Export types
 export * from './types';
+export * from './board';
+export * from './primes';
