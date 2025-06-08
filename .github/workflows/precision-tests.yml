@@ -5,11 +5,17 @@ on:
     branches: [ main, develop ]
     paths:
       - 'core/precision/**'
+      - 'core/chess-core/**'
+      - 'kernel/chess-engine/**'
+      - 'os/apps/chess/**'
       - '.github/workflows/precision-tests.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'core/precision/**'
+      - 'core/chess-core/**'
+      - 'kernel/chess-engine/**'
+      - 'os/apps/chess/**'
       - '.github/workflows/precision-tests.yml'
 
 jobs:
@@ -121,6 +127,33 @@ jobs:
           } catch (error) {
             console.log('Could not read coverage report:', error.message);
           }
+
+    - name: Install chess module dependencies
+      run: |
+        cd core/chess-core && npm ci && cd -
+        cd kernel/chess-engine && npm ci && cd -
+        cd os/apps/chess && npm ci && cd -
+
+    - name: Run chess-core tests
+      run: |
+        cd core/chess-core
+        npm test
+      env:
+        CI: true
+
+    - name: Run chess-engine tests
+      run: |
+        cd kernel/chess-engine
+        npm test
+      env:
+        CI: true
+
+    - name: Run chess application tests
+      run: |
+        cd os/apps/chess
+        npm test
+      env:
+        CI: true
 
   individual-tests:
     runs-on: ubuntu-latest

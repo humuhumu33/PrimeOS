@@ -725,7 +725,7 @@ export async function createAndInitializeCore(options: CoreOptions = {}): Promis
 }
 
 // Re-export key module factory functions
-export { 
+export {
   createAndInitializePrecision,
   createAndInitializePrimeRegistry,
   createAndInitializeIntegrity,
@@ -733,6 +733,9 @@ export {
   createAndInitializeStream,
   createAndInitializeBands
 };
+
+// Export chess utilities
+export * from './chess-core';
 
 // Re-export precision APIs for direct use by modules and kernel
 export {
