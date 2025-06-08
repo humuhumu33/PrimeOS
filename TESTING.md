@@ -1,6 +1,6 @@
 # Testing PrimeOS
 
-PrimeOS uses Jest for unit tests and includes additional test runners. Before running the test suite, install dependencies:
+PrimeOS uses Jest for unit tests and includes additional test runners. Jest and its TypeScript typings are included in the dev dependencies of the root `package.json`. Before running the test suite, install dependencies:
 
 ```bash
 npm install

@@ -67,6 +67,12 @@ module-name/
 
 ## Testing
 
+First, install dependencies to ensure Jest and related typings are available:
+
+```bash
+npm install
+```
+
 Run tests for all modules:
 
 ```bash
