@@ -10,8 +10,8 @@ import {
   ModelInterface,
   ModelResult,
   ModelState
-} from '../model/types';
-import { LoggingInterface } from '../os/logging';
+} from '../../model/types';
+import { LoggingInterface } from '../../logging';
 
 /**
  * Configuration options for hanoi

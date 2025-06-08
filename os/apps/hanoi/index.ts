@@ -9,7 +9,7 @@
 import {
   BaseModel,
   ModelResult
-} from '../model';
+} from '../../model';
 import {
   HanoiOptions,
   HanoiInterface,

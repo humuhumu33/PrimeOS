@@ -6,7 +6,7 @@ import {
   TestResults,
   TestMetadata,
   TestResultStatus
-} from '../os-tests';
+} from '../../os-tests';
 
 export default class HanoiTests implements TestableInterface {
   validateBase(): TestResult {
