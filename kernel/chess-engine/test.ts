@@ -7,7 +7,9 @@
 
 import {
   createChessEngine,
-  ChessEngineInterface
+  ChessEngineInterface,
+  ChessPiece,
+  ChessGame
 } from './index';
 import { ModelLifecycleState } from '../../os/model';
 import { fenToBoardState } from '../core/chess-core/board';
@@ -66,6 +68,26 @@ describe('chess-engine', () => {
       const m1 = await instance.computeMove();
       const m2 = await instance.computeMove();
       expect(m1).toEqual(m2);
+    });
+  });
+
+  describe('Training', () => {
+    test('weights adjust deterministically', async () => {
+      const game: ChessGame = {
+        initial: fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'),
+        moves: [
+          { from: 'e2', to: 'e4' },
+          { from: 'e7', to: 'e5' }
+        ],
+        result: '1-0'
+      };
+      const before = instance.getState().custom?.evalTable as Record<ChessPiece, number>;
+      const wp = before[ChessPiece.WhitePawn];
+      const bp = before[ChessPiece.BlackPawn];
+      await instance.train([game]);
+      const after = instance.getState().custom?.evalTable as Record<ChessPiece, number>;
+      expect(after[ChessPiece.WhitePawn]).toBeCloseTo(wp + 0.01, 5);
+      expect(after[ChessPiece.BlackPawn]).toBeCloseTo(bp - 0.01, 5);
     });
   });
 });
