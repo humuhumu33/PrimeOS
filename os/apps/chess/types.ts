@@ -11,8 +11,8 @@ import {
   ModelResult,
   ModelState,
   ModelLifecycleState
-} from '../os/model/types';
-import { LoggingInterface } from '../os/logging';
+} from '../../model/types';
+import { LoggingInterface } from '../../logging';
 
 /**
  * Configuration options for chess

@@ -11,7 +11,7 @@ import {
   ChessOptions,
   ChessState
 } from './index';
-import { ModelLifecycleState } from '../os/model';
+import { ModelLifecycleState } from '../../model';
 
 describe('chess', () => {
   let instance: ChessInterface;

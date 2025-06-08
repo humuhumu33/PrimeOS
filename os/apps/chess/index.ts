@@ -8,7 +8,7 @@
 
 import {
   BaseModel
-} from '../os/model';
+} from '../../model';
 import {
   ChessOptions,
   ChessInterface,
