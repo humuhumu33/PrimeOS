@@ -8,4 +8,5 @@
 
 export * from './hanoi';
 export * from './chess';
+export * from './chess-web';
 

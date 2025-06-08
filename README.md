@@ -59,6 +59,7 @@ The `os` package provides high-level system capabilities:
 Application modules live under the `os/apps` directory. They serve as examples of how to build on the PrimeOS runtime and leverage the model system. A small but growing set of apps is included:
 
 - **Tower of Hanoi** – a puzzle solver demonstrating recursive processing and lifecycle management.
+- **Chess Web** – a lightweight web interface for playing against the built-in chess engine.
 
 ## Design Philosophy
 
