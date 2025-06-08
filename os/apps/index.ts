@@ -7,4 +7,5 @@
  */
 
 export * from './hanoi';
+export * from './chess';
 
