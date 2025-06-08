@@ -163,3 +163,7 @@ export async function createAndInitializeHanoi(options: HanoiOptions = {}): Prom
 
 // Export types
 export * from './types';
+
+// Export TestableInterface implementation for the testing framework
+export { default as HanoiTests } from './test';
+export { default } from './test';
