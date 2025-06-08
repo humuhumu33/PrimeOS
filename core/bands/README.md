@@ -435,28 +435,7 @@ class BandRegistry {
 }
 ```
 
-#### 3. SpectralProcessor
-**Purpose**: Spectral transformation operations for all bands
-
-**Key Methods**:
-```typescript
-class SpectralProcessor {
-  // Transform operations
-  forwardTransform(data: number[], band: BandType): SpectralResult
-  inverseTransform(spectrum: number[], band: BandType): number[]
-  
-  // Window functions
-  applyWindowFunction(data: number[], window: WindowFunction): number[]
-  
-  // Band-specific optimization
-  optimizeForBand(band: BandType): SpectralConfig
-  
-  // Quality metrics
-  measureTransformQuality(original: number[], reconstructed: number[]): QualityMetrics
-}
-```
-
-#### 4. CrossoverController
+#### 3. CrossoverController
 **Purpose**: Manage transitions between bands
 
 **Key Methods**:
@@ -624,21 +603,6 @@ for await (const chunk of stream) {
 }
 ```
 
-### Spectral Processing
-```typescript
-// Configure spectral processor
-const spectralProcessor = new SpectralProcessor({
-  windowFunction: WindowFunction.KAISER,
-  overlapFactor: 0.5,
-  precisionBits: 64
-});
-
-// Apply spectral transforms
-const data = [1, 2, 3, 4, 5, 6, 7, 8];
-const band = BandType.TREBLE;
-const spectrum = spectralProcessor.forwardTransform(data, band);
-const reconstructed = spectralProcessor.inverseTransform(spectrum, band);
-```
 
 ### Multi-Band Processing
 ```typescript
