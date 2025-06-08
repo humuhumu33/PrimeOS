@@ -232,14 +232,18 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   }
 
   async train(dataset: ChessGame[]): Promise<void> {
+    const rate = 0.01;
     for (const game of dataset) {
-      if (game.result === '1/2-1/2') continue;
-      const modifier = game.result === '1-0' ? 0.1 : -0.1;
-      for (const piece of Object.values(this.evalTable)) {
-        // numeric keys not allowed; but we only update via enumeration later
-      }
-      for (const key of Object.keys(this.evalTable) as Array<ChessPiece>) {
-        this.evalTable[key] += modifier;
+      const sign = game.result === '1-0' ? 1 : game.result === '0-1' ? -1 : 0;
+      if (sign === 0) continue;
+      const board = JSON.parse(JSON.stringify(game.initial)) as BoardState;
+      for (const move of game.moves) {
+        const piece = board.pieces[move.from];
+        if (!piece) continue;
+        const isWhite = piece === piece.toUpperCase();
+        const modifier = rate * sign * (isWhite ? 1 : -1);
+        this.evalTable[piece as ChessPiece] += modifier;
+        this.applyMoveTo(board, move);
       }
     }
     this.state.custom = { ...this.state.custom, evalTable: { ...this.evalTable } } as any;
