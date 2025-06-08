@@ -10,7 +10,7 @@ import {
   ModelInterface,
   ModelResult,
   ModelState
-} from '../os/model/types';
+} from '../model/types';
 import { LoggingInterface } from '../os/logging';
 
 /**
