@@ -16,6 +16,7 @@ import { BoardState, ChessMove, ChessPiece, Square } from '../core/chess-core/ty
 import { fenToBoardState, boardStateToFen } from '../core/chess-core/board';
 import { ChunkType, StandardOpcodes } from '../core/encoding/core/types';
 import { EnhancedChunkVM } from '../core/encoding/vm/vm-enhanced';
+import { createMoveGenerationProgram, decodeMoveOutput } from './vm-moves';
 
 /**
  * Default options for chess-engine
@@ -116,72 +117,14 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   }
 
   private generateMoves(board: BoardState): ChessMove[] {
-    const moves: ChessMove[] = [];
-    const files = ['a','b','c','d','e','f','g','h'];
-    const ranks = [1,2,3,4,5,6,7,8];
-    const dirs = board.activeColor === 'w' ? 1 : -1;
-    const opponent = board.activeColor === 'w' ? /[prnbqk]/ : /[PRNBQK]/;
-
-    for (const f of files) {
-      for (const r of ranks) {
-        const sq = `${f}${r}` as Square;
-        const piece = board.pieces[sq];
-        if (!piece) continue;
-        const isWhite = piece === piece.toUpperCase();
-        if (board.activeColor === 'w' && !isWhite) continue;
-        if (board.activeColor === 'b' && isWhite) continue;
-
-        if (piece.toLowerCase() === 'p') {
-          const nextRank = r + dirs as any;
-          const forward = `${f}${nextRank}` as Square;
-          if (!board.pieces[forward]) {
-            moves.push({ from: sq, to: forward });
-            const startRank = board.activeColor === 'w' ? 2 : 7;
-            if (r === startRank) {
-              const double = `${f}${r + 2 * dirs}` as Square;
-              if (!board.pieces[double]) {
-                moves.push({ from: sq, to: double });
-              }
-            }
-          }
-          const captureFiles = [files[files.indexOf(f)-1], files[files.indexOf(f)+1]];
-          for (const cf of captureFiles) {
-            if (!cf) continue;
-            const target = `${cf}${nextRank}` as Square;
-            if (board.pieces[target] && opponent.test(board.pieces[target]!)) {
-              moves.push({ from: sq, to: target });
-            }
-          }
-        }
-
-        if (piece.toLowerCase() === 'n') {
-          const offsets = [
-            [1,2],[2,1],[-1,2],[-2,1],[1,-2],[2,-1],[-1,-2],[-2,-1]
-          ];
-          for (const [df, dr] of offsets) {
-            const fi = files.indexOf(f) + df;
-            const rr = r + dr;
-            if (fi <0 || fi>7 || rr<1 || rr>8) continue;
-            const nsq = `${files[fi]}${rr}` as Square;
-            const targetPiece = board.pieces[nsq];
-            if (!targetPiece || opponent.test(targetPiece)) {
-              moves.push({ from: sq, to: nsq });
-            }
-          }
-        }
-      }
-    }
-
-    moves.sort((a,b)=>{
-      const sa = `${a.from}${a.to}`;
-      const sb = `${b.from}${b.to}`;
-      return sa.localeCompare(sb);
-    });
-    return moves;
+    const program = createMoveGenerationProgram(board);
+    const out = this.vm.execute(program as any);
+    return decodeMoveOutput(out);
   }
 
   private movesProgram(board: BoardState): { program: any[]; moves: ChessMove[] } {
-    const moves = this.generateMoves(board);
+    const program = createMoveGenerationProgram(board);
+    const moves = decodeMoveOutput(this.vm.execute(program as any));
     const chunks: any[] = [];
     for (const m of moves) {
       const str = `${m.from}${m.to} `;
