@@ -16,7 +16,8 @@
       "@primeos/core-precision": ["core/precision/index.ts"],
       "@primeos/core-precision/*": ["core/precision/*"],
       "@primeos/os-model": ["os/model/index.ts"],
-      "@primeos/os-logging": ["os/logging/index.ts"]
+      "@primeos/os-logging": ["os/logging/index.ts"],
+      "@primeos/os-apps": ["os/apps/index.ts"]
     },
     "types": ["node", "jest"]
   },

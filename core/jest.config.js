@@ -24,7 +24,8 @@ module.exports = {
     '^@primeos/core/(.*)$': '<rootDir>/$1',
     '^@primeos/os-model$': '<rootDir>/../os/model',
     '^@primeos/os-logging$': '<rootDir>/../os/logging',
-    '^@primeos/os-tests$': '<rootDir>/../os/os-tests'
+    '^@primeos/os-tests$': '<rootDir>/../os/os-tests',
+    '^@primeos/os-apps$': '<rootDir>/../os/apps'
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testTimeout: 30000,
