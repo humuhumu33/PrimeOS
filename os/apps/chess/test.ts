@@ -5,12 +5,13 @@
  * Test suite for the chess module.
  */
 
-import { 
+import {
   createChess,
   ChessInterface,
   ChessOptions,
   ChessState
 } from './index';
+import { fenToBoardState } from '../../core/chess-core/board';
 import { ModelLifecycleState } from '../../model';
 
 describe('chess', () => {
@@ -133,6 +134,24 @@ describe('chess', () => {
       // This is a placeholder for module-specific tests
       // Replace with actual tests for the module's features
       expect(true).toBe(true);
+    });
+
+    test('play announces checkmate and stalemate', async () => {
+      const impl: any = instance;
+      await impl.engine.loadPosition(fenToBoardState('rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPP2PP/RNBQKBNR w KQkq - 1 3'));
+      const logs: string[] = [];
+      const orig = console.log;
+      console.log = (msg: string) => { logs.push(msg); };
+      await instance.play();
+      console.log = orig;
+      expect(logs[logs.length - 1]).toBe('Checkmate!');
+
+      await impl.engine.loadPosition(fenToBoardState('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1'));
+      const logs2: string[] = [];
+      console.log = (msg: string) => { logs2.push(msg); };
+      await instance.play();
+      console.log = orig;
+      expect(logs2[logs2.length - 1]).toBe('Stalemate!');
     });
   });
 });
