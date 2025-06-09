@@ -98,4 +98,31 @@ describe('chess-engine', () => {
       expect(after[ChessPiece.BlackPawn]).toBeCloseTo(bp - 0.01, 5);
     });
   });
+
+  describe('Check and game end detection', () => {
+    test('king in check yields only legal moves', async () => {
+      const pos = fenToBoardState('4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1');
+      await instance.loadPosition(pos);
+      const moves = (instance as any).generateMoves(pos);
+      for (const m of moves) {
+        const copy = JSON.parse(JSON.stringify(pos));
+        (instance as any).applyMoveTo(copy, m);
+        expect((instance as any).isKingInCheck(copy, 'b')).toBe(false);
+      }
+    });
+
+    test('detect checkmate', async () => {
+      const mate = fenToBoardState('rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPP2PP/RNBQKBNR w KQkq - 1 3');
+      await instance.loadPosition(mate);
+      const res = await instance.computeMove();
+      expect(res).toBeNull();
+    });
+
+    test('detect stalemate', async () => {
+      const stalemate = fenToBoardState('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1');
+      await instance.loadPosition(stalemate);
+      const res = await instance.computeMove();
+      expect(res).toBeNull();
+    });
+  });
 });
