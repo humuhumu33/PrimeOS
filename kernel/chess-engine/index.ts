@@ -18,6 +18,7 @@ import { ChunkType, StandardOpcodes } from '../core/encoding/core/types';
 import { EnhancedChunkVM, ExtendedOpcodes } from '../core/encoding/vm/enhanced';
 import { createMoveGenerationProgram, decodeMoveOutput, createCheckProgram, decodeCheckOutput } from './vm-moves';
 import { DEFAULT_PST } from './pst';
+import { createSearchProgram } from './vm-search';
 
 /**
  * Default options for chess-engine
@@ -309,69 +310,14 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   }
 
   async search(depth: number): Promise<ChessMove | null> {
-    const maximizing = this.board.activeColor === 'w';
+    const moves = this.generateMoves(this.board);
+    if (moves.length === 0) return null;
 
-    const minimax = (board: BoardState, d: number, alpha: number, beta: number, max: boolean): { move: ChessMove | null; val: number } => {
-      const moves = this.generateMoves(board);
-      if (d === 0 || moves.length === 0) {
-        if (moves.length === 0) {
-          const inCheck = this.isKingInCheck(board, board.activeColor);
-          if (inCheck) return { move: null, val: max ? -Infinity : Infinity };
-          return { move: null, val: 0 };
-        }
-        const prog = this.evaluationProgram(board);
-        const out = this.vm.execute(prog as any);
-        const val = parseInt(out[out.length - 1] || '0', 10);
-        return { move: null, val };
-      }
-
-      let bestMove: ChessMove | null = null;
-      if (max) {
-        let bestVal = -Infinity;
-        for (const m of moves) {
-          const next = JSON.parse(JSON.stringify(board)) as BoardState;
-          this.applyMoveTo(next, m);
-          next.activeColor = board.activeColor === 'w' ? 'b' : 'w';
-          if (m.promotion || next.pieces[m.to]?.toLowerCase() === 'p' || next.enPassant !== null) {
-            next.halfmove = 0;
-          } else {
-            next.halfmove += 1;
-          }
-          if (next.activeColor === 'w') next.fullmove += 1;
-          const res = minimax(next, d - 1, alpha, beta, false);
-          if (res.val > bestVal) {
-            bestVal = res.val;
-            bestMove = m;
-          }
-          alpha = Math.max(alpha, res.val);
-          if (beta <= alpha) break;
-        }
-        return { move: bestMove, val: bestVal };
-      } else {
-        let bestVal = Infinity;
-        for (const m of moves) {
-          const next = JSON.parse(JSON.stringify(board)) as BoardState;
-          this.applyMoveTo(next, m);
-          next.activeColor = board.activeColor === 'w' ? 'b' : 'w';
-          if (m.promotion || next.pieces[m.to]?.toLowerCase() === 'p' || next.enPassant !== null) {
-            next.halfmove = 0;
-          } else {
-            next.halfmove += 1;
-          }
-          if (next.activeColor === 'w') next.fullmove += 1;
-          const res = minimax(next, d - 1, alpha, beta, true);
-          if (res.val < bestVal) {
-            bestVal = res.val;
-            bestMove = m;
-          }
-          beta = Math.min(beta, res.val);
-          if (beta <= alpha) break;
-        }
-        return { move: bestMove, val: bestVal };
-      }
-    };
-
-    return minimax(this.board, depth, -Infinity, Infinity, maximizing).move;
+    const prog = createSearchProgram(depth);
+    this.vm.execute(prog as any);
+    const mem = (this.vm as any).getMemory ? (this.vm as any).getMemory() : {};
+    const idx = typeof mem[4] === 'number' ? mem[4] : 0;
+    return moves[idx] || null;
   }
 
   private applyMoveTo(board: BoardState, move: ChessMove) {

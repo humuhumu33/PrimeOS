@@ -25,4 +25,13 @@ describe('chess-web endpoints', () => {
     expect(res.body.board).toBeDefined();
     expect(res.body).toHaveProperty('gameOver');
   });
+
+  test('deterministic responses for same move', async () => {
+    const play = async () => {
+      return request(app).post('/api/player-move').send({ from: 'd2', to: 'd4' });
+    };
+    const r1 = await play();
+    const r2 = await play();
+    expect(r1.body).toEqual(r2.body);
+  });
 });
