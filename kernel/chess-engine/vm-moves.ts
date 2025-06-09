@@ -1,6 +1,7 @@
 import { BoardState, ChessMove, ChessPiece, Square } from '../core/chess-core/types';
 import { ChunkType } from '../core/encoding/core/types';
-import { ExtendedOpcodes, StandardOpcodes } from '../core/encoding/vm/vm-enhanced';
+import { ExtendedOpcodes } from '../core/encoding/vm/enhanced';
+import { StandardOpcodes } from '../core/encoding/core/types';
 
 /**
  * Helper to convert board pieces to numeric codes for the VM.
