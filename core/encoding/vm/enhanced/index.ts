@@ -328,6 +328,10 @@ export class EnhancedChunkVM {
       instructionsExecuted: this.instructionsExecuted
     };
   }
+
+  getMemory() {
+    return { ...this.memory };
+  }
 }
 
 export { ExtendedOpcodes } from './opcodes';

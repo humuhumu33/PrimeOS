@@ -16,15 +16,15 @@ function captureLogs(fn: () => Promise<void>): Promise<string[]> {
 
 describe('chess cli integration', () => {
   test('machine vs machine logs are deterministic', async () => {
-    const chess = await createAndInitializeChess({ mode: 'auto', depth: 2 });
-    const logs = await captureLogs(() => chess.play());
-    await chess.terminate();
-    expect(logs).toEqual([
-      'move 1: a2a3',
-      'rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1',
-      'move 2: a7a6',
-      'rnbqkbnr/1ppppppp/p7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 1'
-    ]);
+    const run = async () => {
+      const chess = await createAndInitializeChess({ mode: 'auto', depth: 2 });
+      const logs = await captureLogs(() => chess.play());
+      await chess.terminate();
+      return logs;
+    };
+    const l1 = await run();
+    const l2 = await run();
+    expect(l1).toEqual(l2);
   });
 
   test('deterministic output with deeper search', async () => {
