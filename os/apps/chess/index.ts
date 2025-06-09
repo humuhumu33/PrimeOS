@@ -119,7 +119,7 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
         if (!mv) {
           const board = this.engine.getState().custom?.board as string;
           const state = fenToBoardState(board);
-          const inCheck = (this.engine as any).isKingInCheck?.(state, state.activeColor);
+          const inCheck = this.engine.isKingInCheck(state, state.activeColor);
           console.log(inCheck ? 'Checkmate!' : 'Stalemate!');
           break;
         }
@@ -141,7 +141,7 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
         if (!mv) {
           const board = this.engine.getState().custom?.board as string;
           const state = fenToBoardState(board);
-          const inCheck = (this.engine as any).isKingInCheck?.(state, state.activeColor);
+          const inCheck = this.engine.isKingInCheck(state, state.activeColor);
           console.log(inCheck ? 'Checkmate!' : 'Stalemate!');
           break;
         }

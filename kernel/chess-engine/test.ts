@@ -282,14 +282,14 @@ describe('chess-engine', () => {
       for (const m of moves) {
         const copy = JSON.parse(JSON.stringify(pos));
         (instance as any).applyMoveTo(copy, m);
-        expect((instance as any).isKingInCheck(copy, 'b')).toBe(false);
+        expect(instance.isKingInCheck(copy, 'b')).toBe(false);
       }
     });
 
     test('isKingInCheck detects threats', async () => {
       const pos = fenToBoardState('4k3/8/8/8/8/8/4Q3/4K3 b - - 0 1');
-      expect((instance as any).isKingInCheck(pos, 'b')).toBe(true);
-      expect((instance as any).isKingInCheck(pos, 'w')).toBe(false);
+      expect(instance.isKingInCheck(pos, 'b')).toBe(true);
+      expect(instance.isKingInCheck(pos, 'w')).toBe(false);
     });
 
     test('detect checkmate', async () => {
