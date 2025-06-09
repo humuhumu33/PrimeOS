@@ -26,4 +26,16 @@ describe('chess cli integration', () => {
       'rnbqkbnr/1ppppppp/p7/8/8/P7/1PPPPPPP/RNBQKBNR w KQkq - 0 1'
     ]);
   });
+
+  test('deterministic output with deeper search', async () => {
+    const run = async () => {
+      const chess = await createAndInitializeChess({ mode: 'auto', depth: 3, searchDepth: 3 });
+      const logs = await captureLogs(() => chess.play());
+      await chess.terminate();
+      return logs;
+    };
+    const l1 = await run();
+    const l2 = await run();
+    expect(l1).toEqual(l2);
+  });
 });
