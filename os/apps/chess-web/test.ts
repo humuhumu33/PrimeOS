@@ -20,8 +20,9 @@ describe('chess-web endpoints', () => {
   });
 
   test('POST /api/player-move', async () => {
-    const res = await request(app).post('/api/player-move').send({ from: 'e2', to: 'e4' });
+    const res = await request(app).post('/api/player-move').send({ from: 'e2', to: 'e4', promotion: 'q' });
     expect(res.status).toBe(200);
     expect(res.body.board).toBeDefined();
+    expect(res.body).toHaveProperty('gameOver');
   });
 });

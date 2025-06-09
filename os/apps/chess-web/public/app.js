@@ -32,14 +32,22 @@ document.getElementById('moveForm').addEventListener('submit', async e => {
   e.preventDefault();
   const from = document.getElementById('from').value;
   const to = document.getElementById('to').value;
+  const promotion = document.getElementById('promotion').value;
   const res = await fetch('/api/player-move', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to })
+    body: JSON.stringify({ from, to, promotion: promotion || undefined })
   });
   const data = await res.json();
   if (data.board) renderBoard(data.board);
-  document.getElementById('status').textContent = data.engineMove ? `Engine move: ${data.engineMove.from}${data.engineMove.to}` : '';
+  const status = document.getElementById('status');
+  if (data.gameOver) {
+    status.textContent = data.mate ? 'Checkmate!' : 'Stalemate!';
+  } else {
+    status.textContent = data.engineMove ?
+      `Engine move: ${data.engineMove.from}${data.engineMove.to}${data.engineMove.promotion || ''}${data.check ? ' check' : ''}`
+      : '';
+  }
 });
 
 fetchBoard();

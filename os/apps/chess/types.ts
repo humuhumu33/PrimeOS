@@ -24,6 +24,9 @@ export interface ChessOptions extends ModelOptions {
   /** Number of half-moves to play in auto mode */
   depth?: number;
 
+  /** Depth for engine search */
+  searchDepth?: number;
+
   /** Optional path to training dataset */
   train?: string;
 }

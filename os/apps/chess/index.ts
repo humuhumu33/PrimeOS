@@ -22,6 +22,7 @@ import {
 import * as fs from 'fs';
 import * as readline from 'readline';
 import { Square } from '../../../core/chess-core/types';
+import { fenToBoardState } from '../../../core/chess-core/board';
 
 /**
  * Default options for chess
@@ -105,13 +106,24 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
   async play(): Promise<void> {
     const mode = this.options.mode || 'auto';
     const depth = this.options.depth ?? 1;
+    const searchDepth = this.options.searchDepth ?? 1;
     if (!this.engine) {
       throw new Error('Engine not initialized');
     }
     if (mode === 'auto') {
       for (let i = 0; i < depth; i++) {
-        const mv = await this.engine.computeMove();
-        if (!mv) break;
+        const mv = typeof (this.engine as any).search === 'function'
+          ? await (this.engine as any).search(searchDepth)
+          : (this.engine as any).computeMove.length
+            ? await (this.engine as any).computeMove(searchDepth)
+            : await this.engine.computeMove();
+        if (!mv) {
+          const board = this.engine.getState().custom?.board as string;
+          const state = fenToBoardState(board);
+          const inCheck = (this.engine as any).isKingInCheck?.(state, state.activeColor);
+          console.log(inCheck ? 'Checkmate!' : 'Stalemate!');
+          break;
+        }
         console.log(`move ${i + 1}: ${mv.from}${mv.to}`);
         await this.engine.applyMove(mv);
         console.log(this.engine.getState().custom?.board);
@@ -124,8 +136,18 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
         const from = answer.slice(0, 2) as Square;
         const to = answer.slice(2, 4) as Square;
         await this.engine.applyMove({ from, to });
-        const mv = await this.engine.computeMove();
-        if (!mv) break;
+        let mv = typeof (this.engine as any).search === 'function'
+          ? await (this.engine as any).search(searchDepth)
+          : (this.engine as any).computeMove.length
+            ? await (this.engine as any).computeMove(searchDepth)
+            : await this.engine.computeMove();
+        if (!mv) {
+          const board = this.engine.getState().custom?.board as string;
+          const state = fenToBoardState(board);
+          const inCheck = (this.engine as any).isKingInCheck?.(state, state.activeColor);
+          console.log(inCheck ? 'Checkmate!' : 'Stalemate!');
+          break;
+        }
         console.log(`engine: ${mv.from}${mv.to}`);
         await this.engine.applyMove(mv);
       }

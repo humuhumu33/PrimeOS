@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import path from 'path';
 import { createAndInitializeChess } from '../chess';
 import { ChessEngineInterface } from '../../kernel/chess-engine';
+import { fenToBoardState } from '../../core/chess-core/board';
 
 let engine: ChessEngineInterface;
 
@@ -20,17 +21,31 @@ export async function createServer(): Promise<Application> {
   });
 
   app.post('/api/player-move', async (req, res) => {
-    const { from, to } = req.body;
+    const { from, to, promotion } = req.body;
     if (!from || !to) {
       res.status(400).json({ error: 'from and to required' });
       return;
     }
-    await engine.applyMove({ from, to });
-    const engineMove = await engine.computeMove();
+    await engine.applyMove({ from, to, promotion });
+    let engineMove = await (engine as any).search
+      ? await (engine as any).search(1)
+      : await engine.computeMove();
+    let gameOver = false;
+    let check = false;
     if (engineMove) {
       await engine.applyMove(engineMove);
+      const state = fenToBoardState(engine.getState().custom?.board as string);
+      check = (engine as any).isKingInCheck?.(state, state.activeColor);
+      const next = await ((engine as any).search
+        ? (engine as any).search(1)
+        : engine.computeMove());
+      if (!next) gameOver = true;
+    } else {
+      const state = fenToBoardState(engine.getState().custom?.board as string);
+      gameOver = true;
+      check = (engine as any).isKingInCheck?.(state, state.activeColor);
     }
-    res.json({ engineMove, board: engine.getState().custom?.board });
+    res.json({ engineMove, board: engine.getState().custom?.board, gameOver, mate: gameOver && check, check });
   });
 
   app.get('/api/board', (_req, res) => {
