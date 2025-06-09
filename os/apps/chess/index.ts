@@ -110,9 +110,12 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
     if (!this.engine) {
       throw new Error('Engine not initialized');
     }
+    const hasSearch = typeof (this.engine as any).search === 'function';
     if (mode === 'auto') {
       for (let i = 0; i < depth; i++) {
-        const mv = await (this.engine as any).search(searchDepth);
+        const mv = hasSearch
+          ? await (this.engine as any).search(searchDepth)
+          : await this.engine.computeMove();
         if (!mv) {
           const board = this.engine.getState().custom?.board as string;
           const state = fenToBoardState(board);
@@ -132,7 +135,9 @@ export class ChessImplementation extends BaseModel implements ChessInterface {
         const from = answer.slice(0, 2) as Square;
         const to = answer.slice(2, 4) as Square;
         await this.engine.applyMove({ from, to });
-        let mv = await (this.engine as any).search(searchDepth);
+        let mv = hasSearch
+          ? await (this.engine as any).search(searchDepth)
+          : await this.engine.computeMove();
         if (!mv) {
           const board = this.engine.getState().custom?.board as string;
           const state = fenToBoardState(board);

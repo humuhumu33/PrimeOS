@@ -27,14 +27,19 @@ export async function createServer(): Promise<Application> {
       return;
     }
     await engine.applyMove({ from, to, promotion });
-    let engineMove = await (engine as any).search(1);
+    const hasSearch = typeof (engine as any).search === 'function';
+    let engineMove = hasSearch
+      ? await (engine as any).search(1)
+      : await engine.computeMove();
     let gameOver = false;
     let check = false;
     if (engineMove) {
       await engine.applyMove(engineMove);
       const state = fenToBoardState(engine.getState().custom?.board as string);
       check = (engine as any).isKingInCheck?.(state, state.activeColor);
-      const next = await (engine as any).search(1);
+      const next = hasSearch
+        ? await (engine as any).search(1)
+        : await engine.computeMove();
       if (!next) gameOver = true;
     } else {
       const state = fenToBoardState(engine.getState().custom?.board as string);
