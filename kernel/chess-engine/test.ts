@@ -77,6 +77,22 @@ describe('chess-engine', () => {
       expect(Array.isArray(moves)).toBe(true);
       expect(moves.length).toBeGreaterThan(0);
     });
+
+    test('search depth 1 matches computeMove', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const s = await (instance as any).search(1);
+      const c = await instance.computeMove();
+      expect(s).toEqual(c);
+    });
+
+    test('search depth 2 deterministic', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const a = await (instance as any).search(2);
+      const b = await (instance as any).search(2);
+      expect(a).toEqual(b);
+    });
   });
 
   describe('Piece move generation', () => {
