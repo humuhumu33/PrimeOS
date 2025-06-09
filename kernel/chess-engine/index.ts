@@ -15,8 +15,9 @@ import {
 import { BoardState, ChessMove, ChessPiece, Square } from '../core/chess-core/types';
 import { fenToBoardState, boardStateToFen } from '../core/chess-core/board';
 import { ChunkType, StandardOpcodes } from '../core/encoding/core/types';
-import { EnhancedChunkVM } from '../core/encoding/vm/vm-enhanced';
+import { EnhancedChunkVM, ExtendedOpcodes } from '../core/encoding/vm/vm-enhanced';
 import { createMoveGenerationProgram, decodeMoveOutput, createCheckProgram, decodeCheckOutput } from './vm-moves';
+import { DEFAULT_PST } from './pst';
 
 /**
  * Default options for chess-engine
@@ -34,6 +35,7 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   private board: BoardState;
   private vm: EnhancedChunkVM;
   private evalTable: Record<ChessPiece, number>;
+  private pieceSquareTables: Record<ChessPiece, number[]>;
 
   constructor(options: ChessEngineOptions = {}) {
     super({ ...DEFAULT_OPTIONS, ...options });
@@ -56,12 +58,14 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
       [ChessPiece.WhiteKing]: 0,
       [ChessPiece.BlackKing]: 0
     };
+    this.pieceSquareTables = JSON.parse(JSON.stringify(DEFAULT_PST));
   }
 
   protected async onInitialize(): Promise<void> {
     this.state.custom = {
       board: boardStateToFen(this.board),
-      evalTable: { ...this.evalTable }
+      evalTable: { ...this.evalTable },
+      pieceSquareTables: JSON.parse(JSON.stringify(this.pieceSquareTables))
     } as any;
 
     await this.logger.debug('ChessEngine initialized with options', this.options);
@@ -78,7 +82,8 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
     );
     this.state.custom = {
       board: boardStateToFen(this.board),
-      evalTable: { ...this.evalTable }
+      evalTable: { ...this.evalTable },
+      pieceSquareTables: JSON.parse(JSON.stringify(this.pieceSquareTables))
     } as any;
   }
 
@@ -94,24 +99,149 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
     } as any;
   }
 
+  private squareIndex(sq: Square): number {
+    const files = ['a','b','c','d','e','f','g','h'] as const;
+    const file = files.indexOf(sq[0] as any);
+    const rank = parseInt(sq[1], 10);
+    return (rank - 1) * 8 + file;
+  }
+
   private evaluationProgram(board: BoardState): any[] {
     const program: any[] = [];
-    program.push({
-      type: 'operation',
-      opcode: StandardOpcodes.OP_PUSH,
-      operand: 0
-    });
-    for (const piece of Object.values(board.pieces)) {
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+
+    const files = ['a','b','c','d','e','f','g','h'] as const;
+
+    // piece value and piece-square tables
+    for (const [sq, piece] of Object.entries(board.pieces) as [Square, ChessPiece][]) {
       if (!piece) continue;
-      const sign = piece === piece.toUpperCase() ? 1 : -1;
-      const value = this.evalTable[piece as ChessPiece] * sign;
-      program.push({
-        type: 'operation',
-        opcode: StandardOpcodes.OP_PUSH,
-        operand: value
-      });
+      const isWhite = piece === piece.toUpperCase();
+      const sign = isWhite ? 1 : -1;
+      const base = this.evalTable[piece as ChessPiece];
+      const idx = isWhite ? this.squareIndex(sq) : 63 - this.squareIndex(sq);
+      const pstVal = this.pieceSquareTables[piece as ChessPiece][idx] || 0;
+      const value = (base + pstVal) * sign;
+      program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: value });
       program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
     }
+
+    // load board into memory for mobility/king safety loops
+    let memIdx = 0;
+    for (let r = 1; r <= 8; r++) {
+      for (const f of files) {
+        const sq = `${f}${r}` as Square;
+        const code = (p => {
+          if (!p) return 0;
+          const table: Record<ChessPiece, number> = {
+            [ChessPiece.WhitePawn]: 1,
+            [ChessPiece.WhiteKnight]: 2,
+            [ChessPiece.WhiteBishop]: 3,
+            [ChessPiece.WhiteRook]: 4,
+            [ChessPiece.WhiteQueen]: 5,
+            [ChessPiece.WhiteKing]: 6,
+            [ChessPiece.BlackPawn]: 7,
+            [ChessPiece.BlackKnight]: 8,
+            [ChessPiece.BlackBishop]: 9,
+            [ChessPiece.BlackRook]: 10,
+            [ChessPiece.BlackQueen]: 11,
+            [ChessPiece.BlackKing]: 12
+          };
+          return table[p];
+        })(board.pieces[sq]);
+        program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: code });
+        program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: memIdx });
+        memIdx++;
+      }
+    }
+
+    // mobility accumulator at 100, index at 101
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 100 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 101 });
+
+    const loopStart = program.length;
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 101 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 64 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LT });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_JIF, operand: 0 }); // patched later
+    const jmpOutIdx = program.length - 1;
+
+    // body: if mem[i] != 0 then mobility++
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 101 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_NEQ });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_JIF, operand: 0 }); // patched skip add
+    const skipAddIdx = program.length - 1;
+
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 100 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 1 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 100 });
+
+    const afterAddIdx = program.length;
+    program[skipAddIdx].operand = afterAddIdx;
+
+    // i++
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 101 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 1 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 101 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_JMP, operand: loopStart });
+
+    const loopEnd = program.length;
+    program[jmpOutIdx].operand = loopEnd;
+
+    // add mobility weight
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 100 });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 1 });
+    program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_MUL });
+    program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
+
+    // king safety around active king
+    const kingSq = ((): Square | null => {
+      for (const [s, p] of Object.entries(board.pieces)) {
+        if (!p) continue;
+        if (board.activeColor === 'w' && p === ChessPiece.WhiteKing) return s as Square;
+        if (board.activeColor === 'b' && p === ChessPiece.BlackKing) return s as Square;
+      }
+      return null;
+    })();
+    if (kingSq) {
+      const kIdx = this.squareIndex(kingSq);
+      program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+      program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 102 });
+      const offsets = [-9,-8,-7,-1,1,7,8,9];
+      for (const off of offsets) {
+        const addr = kIdx + off;
+        if (addr < 0 || addr >= 64) continue;
+        program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: addr });
+        if (board.activeColor === 'w') {
+          program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 0 });
+          program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_GT });
+          program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: addr });
+          program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 7 });
+          program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LT });
+          program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_AND });
+        } else {
+          program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 6 });
+          program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_GT });
+        }
+        program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_JIF, operand: program.length + 4 });
+        const addKSIdx = program.length - 1;
+        program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 102 });
+        program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 1 });
+        program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
+        program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_STORE, operand: 102 });
+        program[addKSIdx].operand = program.length;
+      }
+      program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_LOAD, operand: 102 });
+      program.push({ type: 'operation', opcode: StandardOpcodes.OP_PUSH, operand: 1 });
+      program.push({ type: 'operation', opcode: ExtendedOpcodes.OP_MUL });
+      program.push({ type: 'operation', opcode: StandardOpcodes.OP_ADD });
+    }
+
     program.push({ type: 'operation', opcode: StandardOpcodes.OP_PRINT });
     return program.map(op => ({ type: ChunkType.OPERATION, checksum: 0n, data: { opcode: op.opcode, operand: op.operand } }));
   }
@@ -325,10 +455,18 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
         const isWhite = piece === piece.toUpperCase();
         const modifier = rate * sign * (isWhite ? 1 : -1);
         this.evalTable[piece as ChessPiece] += modifier;
+        const fromIdx = isWhite ? this.squareIndex(move.from) : 63 - this.squareIndex(move.from);
+        const toIdx = isWhite ? this.squareIndex(move.to) : 63 - this.squareIndex(move.to);
+        this.pieceSquareTables[piece as ChessPiece][fromIdx] -= modifier;
+        this.pieceSquareTables[piece as ChessPiece][toIdx] += modifier;
         this.applyMoveTo(board, move);
       }
     }
-    this.state.custom = { ...this.state.custom, evalTable: { ...this.evalTable } } as any;
+    this.state.custom = {
+      ...this.state.custom,
+      evalTable: { ...this.evalTable },
+      pieceSquareTables: JSON.parse(JSON.stringify(this.pieceSquareTables))
+    } as any;
   }
 }
 

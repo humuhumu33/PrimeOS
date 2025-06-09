@@ -97,6 +97,20 @@ describe('chess-engine', () => {
       expect(after[ChessPiece.WhitePawn]).toBeCloseTo(wp + 0.01, 5);
       expect(after[ChessPiece.BlackPawn]).toBeCloseTo(bp - 0.01, 5);
     });
+
+    test('piece-square table impacts evaluation', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const prog1 = (instance as any).evaluationProgram(start);
+      const out1 = (instance as any).vm.execute(prog1);
+      const val1 = parseInt(out1[out1.length - 1] || '0', 10);
+      const idx = (instance as any).squareIndex('e2');
+      (instance as any).pieceSquareTables[ChessPiece.WhitePawn][idx] = 3;
+      const prog2 = (instance as any).evaluationProgram(start);
+      const out2 = (instance as any).vm.execute(prog2);
+      const val2 = parseInt(out2[out2.length - 1] || '0', 10);
+      expect(val2).toBe(val1 + 3);
+    });
   });
 
   describe('Check and game end detection', () => {
