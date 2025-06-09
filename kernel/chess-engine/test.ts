@@ -305,5 +305,24 @@ describe('chess-engine', () => {
       const res = await instance.computeMove();
       expect(res).toBeNull();
     });
+
+    test('computeMove escapes check legally', async () => {
+      const pos = fenToBoardState('r3k3/8/8/8/8/8/4Q3/4K3 b - - 0 1');
+      await instance.loadPosition(pos);
+      const move = await instance.computeMove();
+      expect(move).not.toBeNull();
+      const copy = JSON.parse(JSON.stringify(pos));
+      (instance as any).applyMoveTo(copy, move!);
+      expect((instance as any).isKingInCheck(copy, 'b')).toBe(false);
+    });
+
+    test('illegal castling not generated', async () => {
+      const board = fenToBoardState('4k3/8/8/8/8/8/4r3/R3K2R w KQ - 0 1');
+      await instance.loadPosition(board);
+      const moves = (instance as any).generateMoves(board);
+      for (const m of moves) {
+        expect(!(m.from === 'e1' && (m.to === 'g1' || m.to === 'c1'))).toBe(true);
+      }
+    });
   });
 });

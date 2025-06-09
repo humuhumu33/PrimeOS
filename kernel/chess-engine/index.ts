@@ -247,15 +247,7 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   }
 
   private generateMoves(board: BoardState): ChessMove[] {
-    const program = createMoveGenerationProgram(board);
-    const raw = decodeMoveOutput(this.vm.execute(program as any));
-    const legal: ChessMove[] = [];
-    for (const m of raw) {
-      const copy = JSON.parse(JSON.stringify(board)) as BoardState;
-      this.applyMoveTo(copy, m);
-      if (!this.isKingInCheck(copy, board.activeColor)) legal.push(m);
-    }
-    return legal;
+    return this.movesProgram(board).moves;
   }
 
   private isKingInCheck(board: BoardState, color: 'w' | 'b'): boolean {
@@ -266,8 +258,25 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
 
   private movesProgram(board: BoardState): { program: any[]; moves: ChessMove[] } {
     const program = createMoveGenerationProgram(board);
-    const moves = decodeMoveOutput(this.vm.execute(program as any));
-    return { program, moves };
+    const raw = decodeMoveOutput(this.vm.execute(program as any));
+    const legal: ChessMove[] = [];
+    for (const m of raw) {
+      // disallow castling through or out of check
+      if (
+        (m.from === 'e1' && (m.to === 'g1' || m.to === 'c1')) ||
+        (m.from === 'e8' && (m.to === 'g8' || m.to === 'c8'))
+      ) {
+        if (this.isKingInCheck(board, board.activeColor)) continue;
+        const mid = m.to === 'g1' ? 'f1' : m.to === 'c1' ? 'd1' : m.to === 'g8' ? 'f8' : 'd8';
+        const tempMid = JSON.parse(JSON.stringify(board)) as BoardState;
+        this.applyMoveTo(tempMid, { from: m.from, to: mid });
+        if (this.isKingInCheck(tempMid, board.activeColor)) continue;
+      }
+      const copy = JSON.parse(JSON.stringify(board)) as BoardState;
+      this.applyMoveTo(copy, m);
+      if (!this.isKingInCheck(copy, board.activeColor)) legal.push(m);
+    }
+    return { program, moves: legal };
   }
 
   async computeMove(): Promise<ChessMove | null> {

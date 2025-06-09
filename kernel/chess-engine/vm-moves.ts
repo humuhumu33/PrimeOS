@@ -196,6 +196,24 @@ export function createMoveGenerationProgram(board: BoardState) {
     }
   }
 
+  // store castling rights and en passant square in memory
+  let cIdx = 120;
+  const rights = board.castling === '-' ? '' : board.castling;
+  for (let i = 0; i < 4; i++) {
+    const ch = rights[i] ?? '-';
+    program.push({ type: ChunkType.OPERATION, checksum: 0n, data: { opcode: StandardOpcodes.OP_PUSH, operand: ch.charCodeAt(0) } });
+    program.push({ type: ChunkType.OPERATION, checksum: 0n, data: { opcode: ExtendedOpcodes.OP_STORE, operand: cIdx } });
+    cIdx++;
+  }
+  let eIdx = 124;
+  const ep = board.enPassant ?? '--';
+  for (let i = 0; i < 2; i++) {
+    const ch = ep[i] ?? '-';
+    program.push({ type: ChunkType.OPERATION, checksum: 0n, data: { opcode: StandardOpcodes.OP_PUSH, operand: ch.charCodeAt(0) } });
+    program.push({ type: ChunkType.OPERATION, checksum: 0n, data: { opcode: ExtendedOpcodes.OP_STORE, operand: eIdx } });
+    eIdx++;
+  }
+
   // encode move list into memory starting at 200
   const moves = pseudoLegalMoves(board);
   const text = moves.map(m => {
