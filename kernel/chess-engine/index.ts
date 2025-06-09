@@ -250,7 +250,7 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
     return this.movesProgram(board).moves;
   }
 
-  private isKingInCheck(board: BoardState, color: 'w' | 'b'): boolean {
+  isKingInCheck(board: BoardState, color: 'w' | 'b'): boolean {
     const prog = createCheckProgram(board, color);
     const out = this.vm.execute(prog as any);
     return decodeCheckOutput(out);

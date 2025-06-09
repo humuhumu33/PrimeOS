@@ -42,6 +42,9 @@ export interface ChessEngineInterface extends ModelInterface {
 
   /** Train evaluation tables from dataset */
   train(dataset: ChessGame[]): Promise<void>;
+
+  /** Check if the given color's king is currently in check */
+  isKingInCheck(board: BoardState, color: 'w' | 'b'): boolean;
   
   /**
    * Access the module logger
