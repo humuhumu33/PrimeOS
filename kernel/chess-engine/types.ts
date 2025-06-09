@@ -34,6 +34,9 @@ export interface ChessEngineInterface extends ModelInterface {
   /** Compute best move from current position */
   computeMove(): Promise<ChessMove | null>;
 
+  /** Search best move to given depth using minimax */
+  search(depth: number): Promise<ChessMove | null>;
+
   /** Apply a move to the current board */
   applyMove(move: ChessMove): Promise<void>;
 
