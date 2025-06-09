@@ -247,72 +247,10 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
   }
 
   private generateMoves(board: BoardState): ChessMove[] {
-    const moves: ChessMove[] = [];
-    const files = ['a','b','c','d','e','f','g','h'];
-
-    const addMove = (from: Square, toFile: number, toRank: number) => {
-      if (toFile < 0 || toFile > 7 || toRank < 1 || toRank > 8) return;
-      const to = `${files[toFile]}${toRank}` as Square;
-      const target = board.pieces[to];
-      const piece = board.pieces[from]!;
-      const isWhite = piece === piece.toUpperCase();
-      if (target && (target === target.toUpperCase()) === isWhite) return;
-      moves.push({ from, to });
-    };
-
-    for (const [sq, piece] of Object.entries(board.pieces) as [Square, ChessPiece][]) {
-      if (!piece) continue;
-      const isWhite = piece === piece.toUpperCase();
-      if ((board.activeColor === 'w') !== isWhite) continue;
-      const file = files.indexOf(sq[0]);
-      const rank = Number(sq[1]);
-
-      switch (piece) {
-        case ChessPiece.WhitePawn:
-        case ChessPiece.BlackPawn: {
-          const dir = isWhite ? 1 : -1;
-          addMove(sq, file, rank + dir);
-          addMove(sq, file - 1, rank + dir);
-          addMove(sq, file + 1, rank + dir);
-          break;
-        }
-        case ChessPiece.WhiteKnight:
-        case ChessPiece.BlackKnight: {
-          const offs = [
-            [1,2],[2,1],[2,-1],[1,-2],[-1,-2],[-2,-1],[-2,1],[-1,2]
-          ];
-          for (const [dx,dy] of offs) addMove(sq, file+dx, rank+dy);
-          break;
-        }
-        case ChessPiece.WhiteBishop:
-        case ChessPiece.BlackBishop: {
-          const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-          for (const [dx,dy] of dirs) addMove(sq, file+dx, rank+dy);
-          break;
-        }
-        case ChessPiece.WhiteRook:
-        case ChessPiece.BlackRook: {
-          const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
-          for (const [dx,dy] of dirs) addMove(sq, file+dx, rank+dy);
-          break;
-        }
-        case ChessPiece.WhiteQueen:
-        case ChessPiece.BlackQueen: {
-          const dirs = [[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
-          for (const [dx,dy] of dirs) addMove(sq, file+dx, rank+dy);
-          break;
-        }
-        case ChessPiece.WhiteKing:
-        case ChessPiece.BlackKing: {
-          const dirs = [[1,1],[1,0],[1,-1],[0,1],[0,-1],[-1,1],[-1,0],[-1,-1]];
-          for (const [dx,dy] of dirs) addMove(sq, file+dx, rank+dy);
-          break;
-        }
-      }
-    }
-
+    const program = createMoveGenerationProgram(board);
+    const raw = decodeMoveOutput(this.vm.execute(program as any));
     const legal: ChessMove[] = [];
-    for (const m of moves) {
+    for (const m of raw) {
       const copy = JSON.parse(JSON.stringify(board)) as BoardState;
       this.applyMoveTo(copy, m);
       if (!this.isKingInCheck(copy, board.activeColor)) legal.push(m);
@@ -328,16 +266,8 @@ export class ChessEngineImplementation extends BaseModel implements ChessEngineI
 
   private movesProgram(board: BoardState): { program: any[]; moves: ChessMove[] } {
     const program = createMoveGenerationProgram(board);
-    const raw = decodeMoveOutput(this.vm.execute(program as any));
-    const moves = this.generateMoves(board);
-    const chunks: any[] = [];
-    for (const m of raw) {
-      const str = `${m.from}${m.to} `;
-      for (const ch of str) {
-        chunks.push({ type: ChunkType.DATA, checksum: 0n, data: { value: ch.charCodeAt(0) } });
-      }
-    }
-    return { program: chunks, moves };
+    const moves = decodeMoveOutput(this.vm.execute(program as any));
+    return { program, moves };
   }
 
   async computeMove(): Promise<ChessMove | null> {

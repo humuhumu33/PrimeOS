@@ -103,11 +103,10 @@ describe('chess-engine', () => {
       expect(moves).toEqual(
         expect.arrayContaining([
           { from: 'e2', to: 'e3' },
-          { from: 'e2', to: 'd3' },
-          { from: 'e2', to: 'f3' }
+          { from: 'e2', to: 'e4' }
         ])
       );
-      expect(moves.length).toBe(3);
+      expect(moves.length).toBe(2);
     });
 
     test('black pawn moves', async () => {
@@ -117,11 +116,10 @@ describe('chess-engine', () => {
       expect(moves).toEqual(
         expect.arrayContaining([
           { from: 'd7', to: 'd6' },
-          { from: 'd7', to: 'c6' },
-          { from: 'd7', to: 'e6' }
+          { from: 'd7', to: 'd5' }
         ])
       );
-      expect(moves.length).toBe(3);
+      expect(moves.length).toBe(2);
     });
 
     test('knight moves', async () => {
@@ -139,33 +137,36 @@ describe('chess-engine', () => {
       const board = fenToBoardState('8/8/8/8/3B4/8/8/8 w - - 0 1');
       await instance.loadPosition(board);
       const moves = (instance as any).generateMoves(board);
-      const targets = ['c5','e5','c3','e3'];
+      const targets = ['c5','b6','a7','e5','f6','g7','h8','c3','b2','a1','e3','f2','g1'];
       for (const t of targets) {
         expect(moves).toContainEqual({ from: 'd4', to: t });
       }
-      expect(moves.length).toBe(4);
+      expect(moves.length).toBe(13);
     });
 
     test('rook moves', async () => {
       const board = fenToBoardState('8/8/8/8/3R4/8/8/8 w - - 0 1');
       await instance.loadPosition(board);
       const moves = (instance as any).generateMoves(board);
-      const targets = ['c4','e4','d5','d3'];
+      const targets = ['a4','b4','c4','e4','f4','g4','h4','d1','d2','d3','d5','d6','d7','d8'];
       for (const t of targets) {
         expect(moves).toContainEqual({ from: 'd4', to: t });
       }
-      expect(moves.length).toBe(4);
+      expect(moves.length).toBe(14);
     });
 
     test('queen moves', async () => {
       const board = fenToBoardState('8/8/8/8/3Q4/8/8/8 w - - 0 1');
       await instance.loadPosition(board);
       const moves = (instance as any).generateMoves(board);
-      const targets = ['c5','e5','c3','e3','c4','e4','d5','d3'];
+      const targets = [
+        'c5','b6','a7','e5','f6','g7','h8','c3','b2','a1','e3','f2','g1',
+        'a4','b4','c4','e4','f4','g4','h4','d1','d2','d3','d5','d6','d7','d8'
+      ];
       for (const t of targets) {
         expect(moves).toContainEqual({ from: 'd4', to: t });
       }
-      expect(moves.length).toBe(8);
+      expect(moves.length).toBe(27);
     });
 
     test('king moves', async () => {
@@ -177,6 +178,32 @@ describe('chess-engine', () => {
         expect(moves).toContainEqual({ from: 'd4', to: t });
       }
       expect(moves.length).toBe(8);
+    });
+
+    test('pawn promotion moves', async () => {
+      const board = fenToBoardState('8/4P3/8/8/8/8/8/8 w - - 0 1');
+      await instance.loadPosition(board);
+      const moves = (instance as any).generateMoves(board);
+      const promos = [ChessPiece.WhiteQueen, ChessPiece.WhiteRook, ChessPiece.WhiteBishop, ChessPiece.WhiteKnight];
+      for (const p of promos) {
+        expect(moves).toContainEqual({ from: 'e7', to: 'e8', promotion: p });
+      }
+      expect(moves.length).toBe(4);
+    });
+
+    test('en passant move', async () => {
+      const board = fenToBoardState('8/8/8/3pP3/8/8/8/8 w - d6 0 1');
+      await instance.loadPosition(board);
+      const moves = (instance as any).generateMoves(board);
+      expect(moves).toContainEqual({ from: 'e5', to: 'd6' });
+    });
+
+    test('castling moves generated', async () => {
+      const board = fenToBoardState('r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1');
+      await instance.loadPosition(board);
+      const moves = (instance as any).generateMoves(board);
+      expect(moves).toContainEqual({ from: 'e1', to: 'g1' });
+      expect(moves).toContainEqual({ from: 'e1', to: 'c1' });
     });
   });
 
