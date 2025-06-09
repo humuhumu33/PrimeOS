@@ -93,6 +93,14 @@ describe('chess-engine', () => {
       const b = await (instance as any).search(2);
       expect(a).toEqual(b);
     });
+
+    test('search depth 3 deterministic', async () => {
+      const start = fenToBoardState('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+      await instance.loadPosition(start);
+      const a = await (instance as any).search(3);
+      const b = await (instance as any).search(3);
+      expect(a).toEqual(b);
+    });
   });
 
   describe('Piece move generation', () => {
