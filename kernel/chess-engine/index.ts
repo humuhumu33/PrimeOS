@@ -15,7 +15,7 @@ import {
 import { BoardState, ChessMove, ChessPiece, Square } from '../core/chess-core/types';
 import { fenToBoardState, boardStateToFen } from '../core/chess-core/board';
 import { ChunkType, StandardOpcodes } from '../core/encoding/core/types';
-import { EnhancedChunkVM, ExtendedOpcodes } from '../core/encoding/vm/vm-enhanced';
+import { EnhancedChunkVM, ExtendedOpcodes } from '../core/encoding/vm/enhanced';
 import { createMoveGenerationProgram, decodeMoveOutput, createCheckProgram, decodeCheckOutput } from './vm-moves';
 import { DEFAULT_PST } from './pst';
 

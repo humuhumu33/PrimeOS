@@ -50,7 +50,7 @@ import {
   validatePositiveBigInt
 } from './utils';
 
-import { EnhancedChunkVM } from './vm/vm-enhanced';
+import { EnhancedChunkVM } from './vm/enhanced';
 import { SimpleNTT } from './ntt';
 import { PrimeRegistryAdapter, createPrimeAdapter, IntegrityAdapter, createIntegrityAdapter } from './adapters';
 
